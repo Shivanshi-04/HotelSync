@@ -67,21 +67,6 @@ export function NoticesPage({ role }: { role: Role }) {
         description={canPost ? "Publish announcements to students and wardens." : "Announcements from the hostel office."}
         action={canPost ? <button className={btnRole}><Megaphone className="size-4" />Post notice</button> : undefined}
       />
-      {canPost ? (
-        <Panel className="mb-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            <label className="text-sm md:col-span-2"><span className="mb-1.5 block text-muted-foreground">Title</span>
-              <input placeholder="Notice title" className="h-10 w-full rounded-lg border border-input bg-background/60 px-3 text-sm outline-none focus:border-role" /></label>
-            <label className="text-sm"><span className="mb-1.5 block text-muted-foreground">Audience</span>
-              <select className="h-10 w-full rounded-lg border border-input bg-background/60 px-3 text-sm outline-none focus:border-role">
-                <option>All residents</option><option>Students</option><option>Wardens</option>
-              </select></label>
-            <label className="text-sm md:col-span-3"><span className="mb-1.5 block text-muted-foreground">Message</span>
-              <textarea rows={3} className="w-full rounded-lg border border-input bg-background/60 p-3 text-sm outline-none focus:border-role" /></label>
-          </div>
-          <button className={btnRole + " mt-4"}>Publish</button>
-        </Panel>
-      ) : null}
       <div className="grid gap-4 md:grid-cols-2">
         {notices.map((n) => (
           <Panel key={n.id}>
@@ -107,12 +92,36 @@ export function NoticesPage({ role }: { role: Role }) {
 /* ---------------- Reports ---------------- */
 export function ReportsPage({ role }: { role: Role }) {
   const canExport = role === "admin";
+  const handleExportReports = () => {
+    const escapeCsv = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const rows = [
+      ["Report", "Metric", "Value", "Details"],
+      ["Fee collection", "Collected", feeCollection.collected, `Target: ${feeCollection.target}`],
+      ["Fee collection", "Collected percentage", `${feeCollection.collectedPct}%`, ""],
+      ...attendanceTrend.map((item) => ["Weekly attendance", item.day, item.present, `Absent: ${item.absent}`]),
+      ...monthlyCollection.map((item) => ["Monthly collection", item.month, item.amount, "Amount in thousands" ]),
+      ...complaintsByCategory.map((item) => ["Complaints by category", item.name, item.value, ""]),
+    ];
+
+    const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "hostel-reports.csv";
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <>
       <PageHeader
         title="Reports"
         description={canExport ? "Generate and export operational reports." : "Read-only analytics for your blocks."}
-        action={canExport ? <button className={btnRole}><Download className="size-4" />Export CSV</button> : undefined}
+        action={canExport ? <button type="button" className={btnRole} onClick={handleExportReports}><Download className="size-4" />Export CSV</button> : undefined}
       />
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <StatCard icon={Wallet} label="Fees collected" value={inr(feeCollection.collected)} hint={`of ${inr(feeCollection.target)} target`} />

@@ -49,7 +49,7 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-160 text-left text-sm">
           <thead>
             <tr className="border-b border-border text-xs tracking-wide text-muted-foreground uppercase">
               {columns.map((c) => (
